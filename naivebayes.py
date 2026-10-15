@@ -1,8 +1,6 @@
 import pandas
-import math
 import numpy as np
 import sys
-import functools
 
 data = pandas.read_csv('zoo.csv')
 train = data.sample(frac=0.7)
