@@ -8,7 +8,7 @@ data = pandas.read_csv('zoo.csv')
 train = data.sample(frac=0.7)
 test = data.drop(train.index)    
 
-# This chunk of code successfully loads the counts of the train dataset into these dictionaries
+# This section successfully loads the counts of the train dataset into these dictionaries
 # feature_counts = {feature_name: {class_name: {feature_value: count}}}
 class_counts = {}
 feature_counts = {}
@@ -29,7 +29,7 @@ for index, row in train.iterrows():
             feature_counts[featureIndex][target][featureValue] += 1
 
 
-# This chunk of code calculates the class prior probability along with the likelihoods of each feature value.
+# This section calculates the class prior probability along with the likelihoods of each feature value.
 # featureLikelihood = { feature_name : {class_name : {feature_value: likelihood}}}
 alpha = 0.01
 numberOfInstances = len(train)
