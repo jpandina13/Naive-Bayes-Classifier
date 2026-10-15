@@ -13,47 +13,47 @@ def load_data():
 
 def step_one(train):
     # This section successfully loads the counts of the train dataset into these dictionaries
-    # feature_value_counts = {feature_name: {class_name: {feature_value: count}}}
+    # feature_value_counts = {feature_name: {class_type: {feature_value: count}}}
     class_counts = {}
     feature_value_counts = {}
     for index, row in train.iterrows():
-        target = row['class_type']
-        if target not in class_counts:
-            class_counts[target] = 1
+        classification = row['class_type']
+        if classification not in class_counts:
+            class_counts[classification] = 1
         else:
-            class_counts[target] += 1
+            class_counts[classification] += 1
         for featureIndex, featureValue in row.items():
             if featureIndex not in feature_value_counts:
                 feature_value_counts[featureIndex] = {}
-            if target not in feature_value_counts[featureIndex]:
-                feature_value_counts[featureIndex][target] = {}
-            if featureValue not in feature_value_counts[featureIndex][target]:
-                feature_value_counts[featureIndex][target][featureValue] = 1
+            if classification not in feature_value_counts[featureIndex]:
+                feature_value_counts[featureIndex][classification] = {}
+            if featureValue not in feature_value_counts[featureIndex][classification]:
+                feature_value_counts[featureIndex][classification][featureValue] = 1
             else:
-                feature_value_counts[featureIndex][target][featureValue] += 1
+                feature_value_counts[featureIndex][classification][featureValue] += 1
     return (class_counts, feature_value_counts)
 
 
 def step_two(train, class_counts, feature_value_counts):
-    # This section calculates the class prior probability along with the likelihoods of each feature value.
-    # featureLikelihood = { feature_name : {class_name : {feature_value: likelihood}}}
+    # This section calculates the classification prior probability along with the likelihoods of each feature value.
+    # featureLikelihood = { feature_name : {classification_name : {feature_value: likelihood}}}
     numberOfInstances = len(train)
-    classPriorProbability = {target: (count / numberOfInstances) for target, count in class_counts.items()}
+    classPriorProbability = {classification: (count / numberOfInstances) for classification, count in class_counts.items()}
     featureLikelihood = {}
     for feature_name in feature_value_counts: 
-        for target in feature_value_counts[feature_name]:
-            for feature_value in feature_value_counts[feature_name][target]:
-                count = feature_value_counts[feature_name][target][feature_value]
+        for classification in feature_value_counts[feature_name]:
+            for feature_value in feature_value_counts[feature_name][classification]:
+                count = feature_value_counts[feature_name][classification][feature_value]
                 if feature_name not in featureLikelihood:
                     featureLikelihood[feature_name] = {}
-                if target not in featureLikelihood[feature_name]:
-                    featureLikelihood[feature_name][target] = {}
-                featureLikelihood[feature_name][target][feature_value] = (count + ALPHA) / (class_counts[target] + ALPHA * train[feature_name].nunique())
+                if classification not in featureLikelihood[feature_name]:
+                    featureLikelihood[feature_name][classification] = {}
+                featureLikelihood[feature_name][classification][feature_value] = (count + ALPHA) / (class_counts[classification] + ALPHA * train[feature_name].nunique())
     return (classPriorProbability, featureLikelihood)
 
 def step_three(test, train, class_counts, classPriorProbability, featureLikelihood):
     # TESTING PHASE
-    # Note: you might encounter feature values that were not in the train set. Their likelihoods are ( 0 + alpha ) / ( class_counts[target] + alpha * data[feature_name].nunique() )
+    # Note: you might encounter feature values that were not in the train set. Their likelihoods are ( 0 + alpha ) / ( class_counts[classification] + alpha * data[feature_name].nunique() )
     test['predicted'] = -1
     test['probability'] = -0.5
     test['correct?'] = 'unknown'
@@ -61,23 +61,23 @@ def step_three(test, train, class_counts, classPriorProbability, featureLikeliho
     totalInstances = len(test)
     for index, row in test.iterrows():
         max_log_prob = -np.inf
-        best_class = None
-        for target in classPriorProbability:
-            posterior_prob = np.log2(classPriorProbability[target])
+        best_classification = None
+        for classification in classPriorProbability:
+            posterior_prob = np.log2(classPriorProbability[classification])
             for featureIndex, featureValue in row.items():
-                if featureIndex == 'class_type' or featureIndex == 'predicted' or featureIndex == 'probability' or featureIndex == 'correct?':  
+                if featureIndex == 'classification_type' or featureIndex == 'predicted' or featureIndex == 'probability' or featureIndex == 'correct?':  
                     continue
-                if featureValue not in featureLikelihood[featureIndex][target]:
+                if featureValue not in featureLikelihood[featureIndex][classification]:
                     #Feature value wasn't encountered during training
-                    posterior_prob += np.log2(ALPHA / (class_counts[target] + ALPHA * train[feature_name].nunique()))
+                    posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[feature_name].nunique()))
                 else:
-                    posterior_prob += np.log2(featureLikelihood[featureIndex][target][featureValue])
+                    posterior_prob += np.log2(featureLikelihood[featureIndex][classification][featureValue])
             if posterior_prob > max_log_prob:
                 max_log_prob = posterior_prob
-                best_class = target
-        test.at[index, 'predicted'] = best_class
+                best_classification = classification
+        test.at[index, 'predicted'] = best_classification
         test.at[index, 'probability'] = np.power(2, max_log_prob)
-        if best_class == row['class_type']:
+        if best_classification == row['classification_type']:
             totalCorrect += 1
             test.at[index, 'correct?'] = 'CORRECT'
         else:
