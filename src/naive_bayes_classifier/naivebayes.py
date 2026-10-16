@@ -34,7 +34,7 @@ def step_one(train): # Rename to calculate_counts
         tuple (dict, dict): the class_counts and feature_value_counts dictionaries.
     """
     # This section successfully loads the counts of the train dataset into these dictionaries
-    # feature_value_counts = {feature_name: {classification: {feature_value: count}}}
+    # feature_value_counts = {classification: {feature_name: {feature_value: count}}}
     class_counts = {}
     feature_value_counts = {}
     for index, row in train.iterrows():
@@ -43,15 +43,15 @@ def step_one(train): # Rename to calculate_counts
             class_counts[classification] = 1
         else:
             class_counts[classification] += 1
+        if classification not in feature_value_counts:
+            feature_value_counts[classification] = {}
         for featureIndex, featureValue in row.items():
-            if featureIndex not in feature_value_counts:
-                feature_value_counts[featureIndex] = {}
-            if classification not in feature_value_counts[featureIndex]:
-                feature_value_counts[featureIndex][classification] = {}
-            if featureValue not in feature_value_counts[featureIndex][classification]:
-                feature_value_counts[featureIndex][classification][featureValue] = 1
+            if featureIndex not in feature_value_counts[classification]:
+                feature_value_counts[classification][featureIndex] = {}
+            if featureValue not in feature_value_counts[classification][featureIndex]:
+                feature_value_counts[classification][featureIndex][featureValue] = 1
             else:
-                feature_value_counts[featureIndex][classification][featureValue] += 1
+                feature_value_counts[classification][featureIndex][featureValue] += 1
     return (class_counts, feature_value_counts)
 
 
@@ -63,10 +63,10 @@ def step_two(train, class_counts, feature_value_counts):
     numberOfInstances = len(train)
     class_prior_probability = {classification: (count / numberOfInstances) for classification, count in class_counts.items()}
     feature_value_likelihood = {}
-    for feature_name in feature_value_counts: 
-        for classification in feature_value_counts[feature_name]:
-            for feature_value in feature_value_counts[feature_name][classification]:
-                count = feature_value_counts[feature_name][classification][feature_value]
+    for classification in feature_value_counts:
+        for feature_name in feature_value_counts[classification]:
+            for feature_value in feature_value_counts[classification][feature_name]:
+                count = feature_value_counts[classification][feature_name][feature_value]
                 if feature_name not in feature_value_likelihood:
                     feature_value_likelihood[feature_name] = {}
                 if classification not in feature_value_likelihood[feature_name]:
