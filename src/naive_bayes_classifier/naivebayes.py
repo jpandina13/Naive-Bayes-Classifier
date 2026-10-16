@@ -13,7 +13,7 @@ def load_data():
 
 def step_one(train):
     # This section successfully loads the counts of the train dataset into these dictionaries
-    # feature_value_counts = {feature_name: {class_type: {feature_value: count}}}
+    # feature_value_counts = {feature_name: {classification: {feature_value: count}}}
     class_counts = {}
     feature_value_counts = {}
     for index, row in train.iterrows():
@@ -36,20 +36,20 @@ def step_one(train):
 
 def step_two(train, class_counts, feature_value_counts):
     # This section calculates the classification prior probability along with the likelihoods of each feature value.
-    # featureLikelihood = { feature_name : {classification_name : {feature_value: likelihood}}}
+    # featureLikelihood = { feature_name : {classification : {feature_value: likelihood}}}
     numberOfInstances = len(train)
     classPriorProbability = {classification: (count / numberOfInstances) for classification, count in class_counts.items()}
-    featureLikelihood = {}
+    feature_value_likelihood = {}
     for feature_name in feature_value_counts: 
         for classification in feature_value_counts[feature_name]:
             for feature_value in feature_value_counts[feature_name][classification]:
                 count = feature_value_counts[feature_name][classification][feature_value]
-                if feature_name not in featureLikelihood:
-                    featureLikelihood[feature_name] = {}
-                if classification not in featureLikelihood[feature_name]:
-                    featureLikelihood[feature_name][classification] = {}
-                featureLikelihood[feature_name][classification][feature_value] = (count + ALPHA) / (class_counts[classification] + ALPHA * train[feature_name].nunique())
-    return (classPriorProbability, featureLikelihood)
+                if feature_name not in feature_value_likelihood:
+                    feature_value_likelihood[feature_name] = {}
+                if classification not in feature_value_likelihood[feature_name]:
+                    feature_value_likelihood[feature_name][classification] = {}
+                feature_value_likelihood[feature_name][classification][feature_value] = (count + ALPHA) / (class_counts[classification] + ALPHA * train[feature_name].nunique())
+    return (classPriorProbability, feature_value_likelihood)
 
 def step_three(test, train, class_counts, classPriorProbability, featureLikelihood):
     # TESTING PHASE
