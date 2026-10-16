@@ -96,7 +96,7 @@ def step_three(test, train, class_counts, class_prior_probability, feature_value
             # np.log2 means log base 2
 
             for index, value in row.items():
-                if index in ['classification_type', 'predicted', 'probability', 'correct?']:
+                if index in ['class_type', 'predicted', 'probability', 'correct?']:
                     continue
                 if value not in feature_value_likelihood[index][classification]: # Feature value wasn't encountered during training
                     posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[index].nunique()))
@@ -107,7 +107,7 @@ def step_three(test, train, class_counts, class_prior_probability, feature_value
                 best_classification = classification
         test.at[index, 'predicted'] = best_classification
         test.at[index, 'probability'] = np.power(2, highest_probability)
-        if best_classification == row['classification_type']:
+        if best_classification == row['class_type']:
             totalCorrect += 1
             test.at[index, 'correct?'] = 'CORRECT'
         else:
