@@ -51,7 +51,7 @@ def step_two(train, class_counts, feature_value_counts):
                 feature_value_likelihood[feature_name][classification][feature_value] = (count + ALPHA) / (class_counts[classification] + ALPHA * train[feature_name].nunique())
     return (class_prior_probability, feature_value_likelihood)
 
-def step_three(test, train, class_counts, class_prior_probability, featureLikelihood):
+def step_three(test, train, class_counts, class_prior_probability, feature_value_likelihood):
     # TESTING PHASE
     # Note: you might encounter feature values that were not in the train set. Their likelihoods are ( 0 + alpha ) / ( class_counts[classification] + alpha * data[feature_name].nunique() )
     test['predicted'] = -1
@@ -67,11 +67,11 @@ def step_three(test, train, class_counts, class_prior_probability, featureLikeli
             for featureIndex, featureValue in row.items():
                 if featureIndex == 'classification_type' or featureIndex == 'predicted' or featureIndex == 'probability' or featureIndex == 'correct?':  
                     continue
-                if featureValue not in featureLikelihood[featureIndex][classification]:
+                if featureValue not in feature_value_likelihood[featureIndex][classification]:
                     #Feature value wasn't encountered during training
                     posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[feature_name].nunique()))
                 else:
-                    posterior_prob += np.log2(featureLikelihood[featureIndex][classification][featureValue])
+                    posterior_prob += np.log2(feature_value_likelihood[featureIndex][classification][featureValue])
             if posterior_prob > max_log_prob:
                 max_log_prob = posterior_prob
                 best_classification = classification
