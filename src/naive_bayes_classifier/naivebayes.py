@@ -5,13 +5,34 @@ import sys
 ALPHA = 0.1
 
 def load_data():
+    """Load data from CSV and split it between train and test datasets.
+
+    The 'train' dataset will contain 70% of the tuples, while the 'test' 
+    dataset will contain the other 30%.
+
+    Returns:
+        tuple (dataframe, dataframe): the train dataset and the test dataset are returned together as a tuple.
+    """
     data = pandas.read_csv('zoo.csv')
     train = data.sample(frac=0.7)
     test = data.drop(train.index)
     return (train, test)
 
 
-def step_one(train):
+def step_one(train): # Rename to calculate_counts
+    """Calculate the class_counts and the feature_value_counts of the training dataset.
+
+    The class_counts dictionary will contain the number of occurences for each class. The
+    feature_value_counts dictionary will contain the number of specific feature values that 
+    occurred within each class.
+
+
+    Args:
+        train (dataframe): the training dataset.
+
+    Returns:
+        tuple (dict, dict): the class_counts and feature_value_counts dictionaries.
+    """
     # This section successfully loads the counts of the train dataset into these dictionaries
     # feature_value_counts = {feature_name: {classification: {feature_value: count}}}
     class_counts = {}
@@ -35,6 +56,8 @@ def step_one(train):
 
 
 def step_two(train, class_counts, feature_value_counts):
+    """
+    """
     # This section calculates the classification prior probability along with the likelihoods of each feature value.
     # featureLikelihood = { feature_name : {classification : {feature_value: likelihood}}}
     numberOfInstances = len(train)
@@ -51,32 +74,39 @@ def step_two(train, class_counts, feature_value_counts):
                 feature_value_likelihood[feature_name][classification][feature_value] = (count + ALPHA) / (class_counts[classification] + ALPHA * train[feature_name].nunique())
     return (class_prior_probability, feature_value_likelihood)
 
+
+
 def step_three(test, train, class_counts, class_prior_probability, feature_value_likelihood):
+    """
+    """
     # TESTING PHASE
-    # Note: you might encounter feature values that were not in the train set. Their likelihoods are ( 0 + alpha ) / ( class_counts[classification] + alpha * data[feature_name].nunique() )
+
     test['predicted'] = -1
     test['probability'] = -0.5
     test['correct?'] = 'unknown'
     totalCorrect = 0
     totalInstances = len(test)
     for index, row in test.iterrows():
-        max_log_prob = -np.inf
+        # Given a tuple, find the highest probability classification
+        highest_probability = -np.inf
         best_classification = None
         for classification in class_prior_probability:
+            
             posterior_prob = np.log2(class_prior_probability[classification])
-            for featureIndex, featureValue in row.items():
-                if featureIndex == 'classification_type' or featureIndex == 'predicted' or featureIndex == 'probability' or featureIndex == 'correct?':  
+            # np.log2 means log base 2
+
+            for index, value in row.items():
+                if index in ['classification_type', 'predicted', 'probability', 'correct?']:
                     continue
-                if featureValue not in feature_value_likelihood[featureIndex][classification]:
-                    #Feature value wasn't encountered during training
-                    posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[feature_name].nunique()))
+                if value not in feature_value_likelihood[index][classification]: # Feature value wasn't encountered during training
+                    posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[index].nunique()))
                 else:
-                    posterior_prob += np.log2(feature_value_likelihood[featureIndex][classification][featureValue])
-            if posterior_prob > max_log_prob:
-                max_log_prob = posterior_prob
+                    posterior_prob += np.log2(feature_value_likelihood[index][classification][value])
+            if posterior_prob > highest_probability:
+                highest_probability = posterior_prob
                 best_classification = classification
         test.at[index, 'predicted'] = best_classification
-        test.at[index, 'probability'] = np.power(2, max_log_prob)
+        test.at[index, 'probability'] = np.power(2, highest_probability)
         if best_classification == row['classification_type']:
             totalCorrect += 1
             test.at[index, 'correct?'] = 'CORRECT'
