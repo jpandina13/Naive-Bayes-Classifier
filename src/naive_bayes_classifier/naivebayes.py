@@ -26,7 +26,6 @@ def step_one(train): # Rename to calculate_counts
     feature_value_counts dictionary will contain the number of specific feature values that 
     occurred within each class.
 
-
     Args:
         train (dataframe): the training dataset.
 
@@ -56,22 +55,20 @@ def step_one(train): # Rename to calculate_counts
 
 
 def step_two(train, class_counts, feature_value_counts):
-    """
+    """Calculate each class_prior_probability and each feature_value_likelihood
     """
     # This section calculates the classification prior probability along with the likelihoods of each feature value.
-    # featureLikelihood = { feature_name : {classification : {feature_value: likelihood}}}
+    # feature_value_likelihood = {classification: {feature_name: {feature_value: likelihood}}}
     numberOfInstances = len(train)
     class_prior_probability = {classification: (count / numberOfInstances) for classification, count in class_counts.items()}
     feature_value_likelihood = {}
     for classification in feature_value_counts:
+        feature_value_likelihood[classification] = {}
         for feature_name in feature_value_counts[classification]:
+            feature_value_likelihood[classification][feature_name] = {}
             for feature_value in feature_value_counts[classification][feature_name]:
                 count = feature_value_counts[classification][feature_name][feature_value]
-                if feature_name not in feature_value_likelihood:
-                    feature_value_likelihood[feature_name] = {}
-                if classification not in feature_value_likelihood[feature_name]:
-                    feature_value_likelihood[feature_name][classification] = {}
-                feature_value_likelihood[feature_name][classification][feature_value] = (count + ALPHA) / (class_counts[classification] + ALPHA * train[feature_name].nunique())
+                feature_value_likelihood[classification][feature_name][feature_value] =(count + ALPHA) / (class_counts[classification] + ALPHA * train[feature_name].nunique())
     return (class_prior_probability, feature_value_likelihood)
 
 
@@ -95,13 +92,13 @@ def step_three(test, train, class_counts, class_prior_probability, feature_value
             posterior_prob = np.log2(class_prior_probability[classification])
             # np.log2 means log base 2
 
-            for index, value in row.items():
-                if index in ['class_type', 'predicted', 'probability', 'correct?']:
+            for feature_name, value in row.items():
+                if feature_name in ['class_type', 'predicted', 'probability', 'correct?']:
                     continue
-                if value not in feature_value_likelihood[index][classification]: # Feature value wasn't encountered during training
-                    posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[index].nunique()))
+                if value not in feature_value_likelihood[classification][feature_name]: # Feature value wasn't encountered during training
+                    posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[feature_name].nunique()))
                 else:
-                    posterior_prob += np.log2(feature_value_likelihood[index][classification][value])
+                    posterior_prob += np.log2(feature_value_likelihood[classification][feature_name][value])
             if posterior_prob > highest_probability:
                 highest_probability = posterior_prob
                 best_classification = classification
