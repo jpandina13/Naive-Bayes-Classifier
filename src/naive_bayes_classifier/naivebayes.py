@@ -45,13 +45,13 @@ def step_one(train): # Rename to calculate_counts
             class_counts[classification] += 1
         if classification not in feature_value_counts:
             feature_value_counts[classification] = {}
-        for featureIndex, featureValue in row.items():
-            if featureIndex not in feature_value_counts[classification]:
-                feature_value_counts[classification][featureIndex] = {}
-            if featureValue not in feature_value_counts[classification][featureIndex]:
-                feature_value_counts[classification][featureIndex][featureValue] = 1
+        for feature_index, feature_value in row.items():
+            if feature_index not in feature_value_counts[classification]:
+                feature_value_counts[classification][feature_index] = {}
+            if feature_value not in feature_value_counts[classification][feature_index]:
+                feature_value_counts[classification][feature_index][feature_value] = 1
             else:
-                feature_value_counts[classification][featureIndex][featureValue] += 1
+                feature_value_counts[classification][feature_index][feature_value] += 1
     return (class_counts, feature_value_counts)
 
 
@@ -60,8 +60,8 @@ def step_two(train, class_counts, feature_value_counts):
     """
     # This section calculates the classification prior probability along with the likelihoods of each feature value.
     # feature_value_likelihood = {classification: {feature_name: {feature_value: likelihood}}}
-    numberOfInstances = len(train)
-    class_prior_probability = {classification: (count / numberOfInstances) for classification, count in class_counts.items()}
+    number_of_instances = len(train)
+    class_prior_probability = {classification: (count / number_of_instances) for classification, count in class_counts.items()}
     feature_value_likelihood = {}
     for classification in feature_value_counts:
         feature_value_likelihood[classification] = {}
@@ -83,8 +83,8 @@ def step_three(test, train, class_counts, class_prior_probability, feature_value
     test['probability'] = -0.5
     test['correct?'] = 'unknown'
 
-    totalCorrect = 0
-    totalInstances = len(test)
+    total_correct = 0
+    total_instances = len(test)
     for index, row in test.iterrows():
 
         # Given a tuple, find the highest probability classification
@@ -108,13 +108,13 @@ def step_three(test, train, class_counts, class_prior_probability, feature_value
 
         # Compare the predicted classification with the correct classification
         if best_classification == row['class_type']:
-            totalCorrect += 1
+            total_correct += 1
             test.at[index, 'correct?'] = 'CORRECT'
         else:
             test.at[index, 'correct?'] = 'wrong'
 
     # Print the model's performance
-    accuracy = totalCorrect / totalInstances
+    accuracy = total_correct / total_instances
     print(f"Model accuracy: {accuracy}\n")
 
     test.to_csv(sys.stdout, index=False)
