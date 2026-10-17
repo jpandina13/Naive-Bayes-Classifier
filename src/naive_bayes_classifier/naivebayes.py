@@ -77,41 +77,45 @@ def step_two(train, class_counts, feature_value_counts):
 def step_three(test, train, class_counts, class_prior_probability, feature_value_likelihood):
     """
     """
-    # TESTING PHASE
 
-    test['predicted'] = -1
+    # Add three columns to the test dataset with initialized values:
+    test['predicted_class'] = -1
     test['probability'] = -0.5
     test['correct?'] = 'unknown'
+
     totalCorrect = 0
     totalInstances = len(test)
     for index, row in test.iterrows():
+
         # Given a tuple, find the highest probability classification
         highest_probability = -np.inf
         best_classification = None
         for classification in class_prior_probability:
-            
             posterior_prob = np.log2(class_prior_probability[classification])
-            # np.log2 means log base 2
-
             for feature_name, value in row.items():
-                if feature_name in ['class_type', 'predicted', 'probability', 'correct?']:
+                if feature_name in ['class_type', 'predicted_class', 'probability', 'correct?']:
                     continue
-                if value not in feature_value_likelihood[classification][feature_name]: # Feature value wasn't encountered during training
+                if value not in feature_value_likelihood[classification][feature_name]: # If feature value wasn't encountered during training...
                     posterior_prob += np.log2(ALPHA / (class_counts[classification] + ALPHA * train[feature_name].nunique()))
                 else:
                     posterior_prob += np.log2(feature_value_likelihood[classification][feature_name][value])
             if posterior_prob > highest_probability:
                 highest_probability = posterior_prob
                 best_classification = classification
-        test.at[index, 'predicted'] = best_classification
+
+        test.at[index, 'predicted_class'] = best_classification
         test.at[index, 'probability'] = np.power(2, highest_probability)
+
+        # Compare the predicted classification with the correct classification
         if best_classification == row['class_type']:
             totalCorrect += 1
             test.at[index, 'correct?'] = 'CORRECT'
         else:
             test.at[index, 'correct?'] = 'wrong'
 
+    # Print the model's performance
     accuracy = totalCorrect / totalInstances
+    print(f"Model accuracy: {accuracy}\n")
 
     test.to_csv(sys.stdout, index=False)
 
