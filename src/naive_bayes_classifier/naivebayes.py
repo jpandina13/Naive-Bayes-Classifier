@@ -116,13 +116,4 @@ def step_three(test, train, class_counts, class_prior_probability, feature_value
     test.to_csv(sys.stdout, index=False)
 
 
-def main():
-    train, test = load_data()
-
-    class_counts, feature_value_counts = step_one(train)
-
-    class_prior_probability, feature_value_likelihood = step_two(train, class_counts, feature_value_counts)
-
-    step_three(test, train, class_counts, class_prior_probability, feature_value_likelihood)
-
 
