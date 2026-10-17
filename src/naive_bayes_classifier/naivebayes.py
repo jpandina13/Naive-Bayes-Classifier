@@ -13,7 +13,7 @@ def load_data():
     Returns:
         tuple (dataframe, dataframe): the train dataset and the test dataset are returned together as a tuple.
     """
-    data = pandas.read_csv('zoo.csv')
+    data = pandas.read_csv(Path(__file__).parent.parent.parent / "data/zoo.csv")
     train = data.sample(frac=0.7)
     test = data.drop(train.index)
     return (train, test)
